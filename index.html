@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub AI Assistant</title>
+    <style>
+        :root {
+            --primary-color: #2ea44f;
+            --secondary-color: #f6f8fa;
+            --text-color: #24292e;
+            --border-color: #e1e4e8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .upload-section {
+            border: 2px dashed var(--border-color);
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .upload-section:hover {
+            border-color: var(--primary-color);
+        }
+
+        .analysis-results {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .language-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--secondary-color);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e1e4e8;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .issues-list {
+            background: #fff5f5;
+            border: 1px solid #feb2b2;
+            border-radius: 6px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .issue-item {
+            padding: 10px;
+            border-bottom: 1px solid #fed7d7;
+        }
+
+        .issue-item:last-child {
+            border-bottom: none;
+        }
+
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #22863a;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 GitHub AI Assistant</h1>
+        
+        <div class="upload-section" id="dropZone">
+            <h2>📁 Перетащите репозиторий сюда</h2>
+            <p>или</p>
+            <input type="file" id="fileInput" webkitdirectory multiple style="display: none;">
+            <button class="btn" onclick="document.getElementById('fileInput').click()">
+                Выбрать папку
+            </button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Анализируем репозиторий...</p>
+        </div>
+
+        <div class="analysis-results" id="results">
+            <h2>📊 Результаты анализа</h2>
+            
+            <div class="language-stats" id="languageStats">
+                <!-- Статистика будет добавлена через JavaScript -->
+            </div>
+
+            <div class="complexity-score">
+                <h3>Общая сложность: <span id="complexityValue">0</span></h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="complexityBar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="issues" id="issuesContainer" style="display: none;">
+                <h3>⚠️ Найденные проблемы</h3>
+                <div class="issues-list" id="issuesList">
+                    <!-- Список проблем -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="github-ai-assistant.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+
+            dropZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                dropZone.style.borderColor = '#2ea44f';
+            });
+
+            dropZone.addEventListener('dragleave', function() {
+                dropZone.style.borderColor = '#e1e4e8';
+            });
+
+            dropZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                dropZone.style.borderColor = '#e1e4e8';
+                
+                const items = e.dataTransfer.items;
+                if (items && items.length > 0) {
+                    analyzeRepository(items[0].getAsFile().path);
+                }
+            });
+
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    analyzeRepository(e.target.files[0].path);
+                }
+            });
+
+            async function analyzeRepository(path) {
+                loading.style.display = 'block';
+                results.style.display = 'none';
+
+                try {
+                    const assistant = new GitHubAIAssistant();
+                    const analysis = await assistant.analyzeRepository(path);
+                    
+                    displayResults(analysis);
+                    
+                } catch (error) {
+                    console.error('Ошибка анализа:', error);
+                    alert('Произошла ошибка при анализе репозитория');
+                } finally {
+                    loading.style.display = 'none';
+                    results.style.display = 'block';
+                }
+            }
+
+            function displayResults(analysis) {
+                // Отображение статистики по языкам
+                const languageStats = document.getElementById('languageStats');
+                languageStats.innerHTML = '';
+                
+                for (const [lang, count] of Object.entries(analysis.byLanguage)) {
+                    const percentage = (count / analysis.totalFiles * 100).toFixed(1);
+                    
+                    const statCard = document.createElement('div');
+                    statCard.className = 'stat-card';
+                    statCard.innerHTML = `
+                        <h3>${lang}</h3>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${percentage}%"></div>
+                        </div>
+                        <p>${count} файлов (${percentage}%)</p>
+                    `;
+                    languageStats.appendChild(statCard);
+                }
+
+                // Отображение сложности
+                document.getElementById('complexityValue').textContent = analysis.complexityScore;
+                document.getElementById('complexityBar').style.width = 
+                    Math.min(analysis.complexityScore / 100 * 100, 100) + '%';
+
+                // Отображение проблем
+                if (analysis.issuesFound && analysis.issuesFound.length > 0) {
+                    document.getElementById('issuesContainer').style.display = 'block';
+                    const issuesList = document.getElementById('issuesList');
+                    issuesList.innerHTML = '';
+                    
+                    analysis.issuesFound.forEach(issue => {
+                        const issueItem = document.createElement('div');
+                        issueItem.className = 'issue-item';
+                        issueItem.textContent = `${issue.severity}: ${issue.message}`;
+                        issuesList.appendChild(issueItem);
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>
