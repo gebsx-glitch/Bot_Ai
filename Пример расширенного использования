@@ -1,0 +1,14 @@
+# Пример расширенного использования
+assistant = GitHubAIAssistant()
+
+# Анализ репозитория
+results = assistant.analyze_repository('/path/to/repo')
+
+# Генерация документации
+doc = assistant.generate_documentation('src/main.py')
+
+# Анализ кода на безопасность
+security_issues = assistant.check_security('src/app.js')
+
+# Оптимизация кода
+optimization_suggestions = assistant.optimize_code('src/algorithm.cpp')
