@@ -1,0 +1,4 @@
+# data.txt
+найден пользователь: Christian
+репозиторий: project1
+язык: Python
