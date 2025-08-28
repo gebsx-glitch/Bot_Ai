@@ -1,0 +1,12 @@
+{
+    "github": {
+        "api_url": "https://api.github.com",
+        "search_limit": 20,
+        "timeout": 30
+    },
+    "search_options": {
+        "languages": ["python", "java", "javascript", "html", "css", "c++"],
+        "min_followers": 0,
+        "min_repos": 1
+    }
+}
