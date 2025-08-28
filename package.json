@@ -1,0 +1,18 @@
+{
+  "name": "github-ai-assistant",
+  "version": "1.0.0",
+  "description": "AI assistant for GitHub repository analysis",
+  "main": "github-ai-assistant.js",
+  "scripts": {
+    "start": "node github-ai-assistant.js",
+    "dev": "nodemon github-ai-assistant.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
